@@ -35,6 +35,8 @@ target_include_directories(factdb_lib PRIVATE include)
 # Main executable for the src folder
 add_executable(factdb 
     src/main.cpp
+    src/internal/skiplist.cpp 
+    src/internal/sstable.cpp
 )
 
 # Link the main executable with the shared library
