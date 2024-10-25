@@ -22,6 +22,14 @@ TEST(SkipListSuite, BasicInsert2) {
     EXPECT_EQ(skipList.find_value(3), 2);
 }
 
+TEST(SkipListSuite, BasicInsert3) {
+    factdb::SkipList<int, int> skipList(4, 50.0f);
+    skipList.insert(4, 2);
+    skipList.insert(4, 3);
+    
+    EXPECT_EQ(skipList.find_value(4), 2);
+}
+
 TEST(SkipListSuite, BasicSearch1) {
     factdb::SkipList<int, int> skipList(4, 50.0f);
     skipList.insert(3, 3);
@@ -53,11 +61,21 @@ TEST(SkipListSuite, BasicUpdate1) {
 
 TEST(SkipListSuite, BasicUpdate2) {
     factdb::SkipList<int, int> skipList(4, 50.0f);
-    skipList.insert(3, 2);
+    skipList.insert(4, 2);
     skipList.insert(4, 3);
 
     skipList.update(4, 10);
-    skipList.update(3, 11);
-    EXPECT_EQ(skipList.find_value(4), 10);
-    EXPECT_EQ(skipList.find_value(3), 11);
+    skipList.update(4, 11);
+    EXPECT_EQ(skipList.find_value(4), 11);
+}
+
+TEST(SkipListSuite, BasicUpdate3) {
+    factdb::SkipList<int, int> skipList(4, 50.0f);
+    skipList.insert(4, 2);
+    skipList.insert(3, 3);
+
+    skipList.update(4, 11);
+    skipList.update(3, 7);
+    EXPECT_EQ(skipList.find_value(4), 11);
+    EXPECT_EQ(skipList.find_value(3), 7);
 }
