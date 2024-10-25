@@ -148,7 +148,18 @@ namespace factdb{
             return false;
         }
         void display() {
-            
+            std::cout << "\n*****Skip List*****"<<"\n";
+            for(int i=0; i <= highest_lvl_; i++)
+            {
+                std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_->forward_[i];
+                std::cout << "Level " << i <<": ";
+                while(current != NULL)
+                {
+                    std::cout << current->entry_.key_<<" ";
+                    current = current->forward_[i];
+                }
+                std::cout << "\n";
+            }
         }
     private:
         std::shared_ptr<SkipListNode<KeyType, ValueType>> head_;     // head node of the skiplist
