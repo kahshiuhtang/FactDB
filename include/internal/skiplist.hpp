@@ -33,7 +33,7 @@ namespace factdb{
             : key_(k) {
                 auto new_entry = std::make_shared<MemTableValue<ValueType>>(
                                                                 v, 1633036800, false);
-                values_.emplace_back(new_entry);
+                values_.push_back(new_entry);
             }
     };
 
@@ -80,7 +80,7 @@ namespace factdb{
 
             current = current->forward_[0]; // where we should insert
 
-            if(current == NULL){
+            if(current == NULL || current->entry_->key_ != key){
                 int r_level = random_level();
                 if(r_level > highest_lvl_){
                     for(int i = highest_lvl_ + 1; i < r_level + 1; i++){
@@ -95,6 +95,9 @@ namespace factdb{
                     new_node->forward_[i] = to_update[i]->forward_[i];
                     to_update[i]->forward_[i] = new_node;
                 }
+            }else if(current == NULL || current->entry_->key_ == key){
+                auto new_entry = std::make_shared<MemTableValue<ValueType>>(value, 1633036800, false);
+                current->entry_->values_.push_back(new_entry);
             }
         }
         bool exists(KeyType key) {
