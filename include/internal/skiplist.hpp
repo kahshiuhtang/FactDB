@@ -36,21 +36,25 @@ namespace factdb{
     public:
         SkipList(int max_level, float prob)
         : max_level_(max_level), next_lvl_prob_(prob) {
-            head_ = std::make_shared<SkipListNode<KeyType, ValueType>>(max_level, MemTableEntry<KeyType, ValueType>(KeyType{}, std::nullopt, 0, false));
+            head_ = std::make_shared<SkipListNode<KeyType, ValueType>>(max_level, MemTableEntry<KeyType, ValueType>(
+                KeyType{}, std::nullopt, 0, false));
             highest_lvl_ = 0;
         }
+
         SkipList(int max_level)
         : max_level_(max_level), next_lvl_prob_(50.0) {
-            head_ = std::make_shared<SkipListNode<KeyType, ValueType>>(max_level, MemTableEntry<KeyType, ValueType>(KeyType{}, std::nullopt, 0, false));
+            head_ = std::make_shared<SkipListNode<KeyType, ValueType>>(max_level, MemTableEntry<KeyType, ValueType>(
+                KeyType{}, std::nullopt, 0, false));
             highest_lvl_ = 0;
         }
+
         void insert(KeyType key, ValueType value) {
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
             std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_];
             memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
             
             //start at highest level of skiplist, move current pointer forward 
-            for(int i = highest_lvl_; i >= 0; i--){ // top level dowmn
+            for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
                 while(current->forward_[i] != NULL && 
                         current->forward_[i]->entry_.key_ < key){ // move as far right as possible
                             current = current->forward_[i];
@@ -71,20 +75,48 @@ namespace factdb{
 
                 std::shared_ptr<SkipListNode<KeyType, ValueType>> new_node = std::make_shared<SkipListNode<KeyType, ValueType>>(
                                                                 max_level_, MemTableEntry<KeyType, ValueType>
-                                                                (KeyType{}, std::nullopt, 0, false));
+                                                                (key, value, 0, false));
                 for(int i = 0; i < r_level; i++){
                     new_node->forward_[i] = to_update[i]->forward_[i];
                     to_update[i]->forward_[i] = new_node;
                 }
             }
         }
-        bool search(KeyType value){
 
-            return false;
+        bool search(KeyType key) {
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_];
+            memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
+            
+            //start at highest level of skiplist, move current pointer forward 
+            for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
+                while(current->forward_[i] != NULL && 
+                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                            current = current->forward_[i];
+                }
+            }
+            if(current == NULL || current->forward_[0] == NULL){
+                return false;
+            }
+            return current->forward_[0]->entry_.key_ == key; 
         }
         bool update(KeyType key, ValueType value){
-
-            return false;
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_];
+            memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
+            
+            //start at highest level of skiplist, move current pointer forward 
+            for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
+                while(current->forward_[i] != NULL && 
+                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                            current = current->forward_[i];
+                }
+            }
+            if(current == NULL || current->forward_[0] == NULL){
+                return false;
+            }
+            current->forward_[0]->entry_.value_ = value;
+            return true;
         }
         bool remove(KeyType value){
 
