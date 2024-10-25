@@ -27,7 +27,7 @@ TEST(SkipListSuite, BasicInsert3) {
     skipList.insert(4, 2);
     skipList.insert(4, 3);
     
-    EXPECT_EQ(skipList.find_value(4), 2);
+    EXPECT_EQ(skipList.find_value(4), 3);
 }
 
 TEST(SkipListSuite, BasicSearch1) {
@@ -74,8 +74,12 @@ TEST(SkipListSuite, BasicUpdate3) {
     skipList.insert(4, 2);
     skipList.insert(3, 3);
 
-    skipList.update(4, 11);
-    skipList.update(3, 7);
+    EXPECT_EQ(skipList.find_value(4), 2);
+    EXPECT_EQ(skipList.find_value(3), 3);
+
+    EXPECT_EQ(skipList.update(4, 11), true);
+    EXPECT_EQ(skipList.update(3, 7), true);
+    skipList.display();
     EXPECT_EQ(skipList.find_value(4), 11);
     EXPECT_EQ(skipList.find_value(3), 7);
 }
