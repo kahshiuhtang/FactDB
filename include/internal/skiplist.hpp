@@ -50,7 +50,7 @@ namespace factdb{
 
         void insert(KeyType key, ValueType value) {
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
-            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_];
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_ + 1];
             memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
             
             //start at highest level of skiplist, move current pointer forward 
@@ -76,7 +76,7 @@ namespace factdb{
                 std::shared_ptr<SkipListNode<KeyType, ValueType>> new_node = std::make_shared<SkipListNode<KeyType, ValueType>>(
                                                                 max_level_, MemTableEntry<KeyType, ValueType>
                                                                 (key, value, 0, false));
-                for(int i = 0; i < r_level; i++){
+                for(int i = 0; i <= r_level; i++){
                     new_node->forward_[i] = to_update[i]->forward_[i];
                     to_update[i]->forward_[i] = new_node;
                 }
@@ -114,8 +114,6 @@ namespace factdb{
         }
         bool update(KeyType key, ValueType value){
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
-            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_];
-            memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
             
             //start at highest level of skiplist, move current pointer forward 
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
@@ -123,16 +121,20 @@ namespace factdb{
                         current->forward_[i]->entry_.key_ < key){ // move as far right as possible
                             current = current->forward_[i];
                 }
-            }
-            if(current == NULL || current->forward_[0] == NULL){
+            } 
+            current = current->forward_[0];
+            if(current == NULL || current->entry_.key_ != key){
                 return false;
             }
-            current->forward_[0]->entry_.value_ = value;
-            return true;
+            if(current && current->entry_.key_ == key){
+                current->entry_.value_ = value;
+                return true;
+            }
+            return false;
         }
         bool remove(KeyType key){
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
-            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_];
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_ + 1];
             memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
             
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
