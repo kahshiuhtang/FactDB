@@ -82,11 +82,8 @@ namespace factdb{
                 }
             }
         }
-
-        bool search(KeyType key) {
+        bool exists(KeyType key) {
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
-            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_];
-            memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
             
             //start at highest level of skiplist, move current pointer forward 
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
@@ -99,6 +96,21 @@ namespace factdb{
                 return false;
             }
             return current->forward_[0]->entry_.key_ == key; 
+        }
+        std::optional<ValueType> find_value(KeyType key) {
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
+            
+            for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
+                while(current->forward_[i] != NULL && 
+                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                            current = current->forward_[i];
+                }
+            }
+            current = current->forward_[0];
+            if(current != NULL && current->entry_.key_ == key){
+                return current->entry_.value_;
+            }
+            return std::nullopt;
         }
         bool update(KeyType key, ValueType value){
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
@@ -148,14 +160,15 @@ namespace factdb{
             return false;
         }
         void display() {
-            std::cout << "\n*****Skip List*****"<<"\n";
+            std::cout << "\n*****Skip List in [Key(Value)] format *****"<<"\n";
             for(int i=0; i <= highest_lvl_; i++)
             {
                 std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_->forward_[i];
                 std::cout << "Level " << i <<": ";
                 while(current != NULL)
                 {
-                    std::cout << current->entry_.key_<<" ";
+                    int value = current->entry_.value_.value_or(0);
+                    std::cout << current->entry_.key_ << "(" <<  value << ") ";
                     current = current->forward_[i];
                 }
                 std::cout << "\n";

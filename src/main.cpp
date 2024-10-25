@@ -12,10 +12,10 @@ int main(){
     // Display the current state of the skip list
     std::cout << "Current state of the SkipList:\n";
     skipList.display();
-    if(skipList.search(4)){
+    if(skipList.exists(4)){
         std::cout <<  "Found 4"  << std::endl;
     }
-    if(skipList.search(5)){
+    if(skipList.exists(5)){
         std::cout <<  "FOUND 5" << std::endl;
     }
     skipList.update(4, 7);
