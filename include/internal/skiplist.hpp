@@ -11,40 +11,56 @@
 
 namespace factdb{
 
-    template <typename KeyType, typename ValueType>
-    struct MemTableEntry {
-        KeyType key_;
-        std::optional<ValueType> value_;
+    template <typename ValueType>
+    struct MemTableValue {
+        ValueType value_;
         uint64_t timestamp_;
         bool deleted_;
 
-        MemTableEntry(const KeyType& k, const std::optional<ValueType>& v, uint64_t ts, bool del)
-            : key_(k), value_(v), timestamp_(ts), deleted_(del) {}
+        MemTableValue(ValueType v, uint64_t ts, bool del)
+            : value_(v), timestamp_(ts), deleted_(del) {}
+    };
+
+    template <typename KeyType, typename ValueType>
+    struct MemTableEntry {
+        KeyType key_;
+        std::vector<std::shared_ptr<MemTableValue<ValueType>>> values_;
+
+        MemTableEntry(const KeyType& k)
+            : key_(k), values_{} {}
+        
+        MemTableEntry(const KeyType& k, const ValueType v)
+            : key_(k) {
+                auto new_entry = std::make_shared<MemTableValue<ValueType>>(
+                                                                v, 1633036800, false);
+                values_.emplace_back(new_entry);
+            }
     };
 
     template <typename KeyType, typename ValueType>
     struct SkipListNode {
-        MemTableEntry<KeyType, ValueType> entry_;
+        std::shared_ptr<MemTableEntry<KeyType, ValueType>> entry_;
         std::vector<std::shared_ptr<SkipListNode<KeyType, ValueType>>> forward_; // next node at each level
 
-        SkipListNode(int level, const MemTableEntry<KeyType, ValueType>& entry)
+        SkipListNode(int level, std::shared_ptr<MemTableEntry<KeyType, ValueType>> entry)
             : entry_(entry), forward_(level + 1, nullptr) {}
     };
+
     // two directions: forward and down
     template <typename KeyType, typename ValueType>
     class SkipList {
     public:
         SkipList(int max_level, float prob)
         : max_level_(max_level), next_lvl_prob_(prob) {
-            head_ = std::make_shared<SkipListNode<KeyType, ValueType>>(max_level, MemTableEntry<KeyType, ValueType>(
-                KeyType{}, std::nullopt, 0, false));
+            auto first_entry = std::make_shared<MemTableEntry<KeyType, ValueType>>(KeyType{}, ValueType{});
+            head_ = std::make_shared<SkipListNode<KeyType, ValueType>>(max_level, first_entry);
             highest_lvl_ = 0;
         }
 
         SkipList(int max_level)
         : max_level_(max_level), next_lvl_prob_(50.0) {
-            head_ = std::make_shared<SkipListNode<KeyType, ValueType>>(max_level, MemTableEntry<KeyType, ValueType>(
-                KeyType{}, std::nullopt, 0, false));
+            auto first_entry = std::make_shared<MemTableEntry<KeyType, ValueType>>(KeyType{}, ValueType{});
+            head_ = std::make_shared<SkipListNode<KeyType, ValueType>>(max_level, first_entry);
             highest_lvl_ = 0;
         }
 
@@ -56,7 +72,7 @@ namespace factdb{
             //start at highest level of skiplist, move current pointer forward 
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
                 while(current->forward_[i] != NULL && 
-                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                        current->forward_[i]->entry_->key_ < key){ // move as far right as possible
                             current = current->forward_[i];
                 }
                 to_update[i] = current;
@@ -64,7 +80,7 @@ namespace factdb{
 
             current = current->forward_[0]; // where we should insert
 
-            if(current == NULL || current->entry_.key_ != key){
+            if(current == NULL){
                 int r_level = random_level();
                 if(r_level > highest_lvl_){
                     for(int i = highest_lvl_ + 1; i < r_level + 1; i++){
@@ -72,10 +88,9 @@ namespace factdb{
                     }
                     highest_lvl_ = r_level;
                 }
-
+                auto new_entry = std::make_shared<MemTableEntry<KeyType, ValueType>>(key, value);
                 std::shared_ptr<SkipListNode<KeyType, ValueType>> new_node = std::make_shared<SkipListNode<KeyType, ValueType>>(
-                                                                max_level_, MemTableEntry<KeyType, ValueType>
-                                                                (key, value, 0, false));
+                                                                max_level_, new_entry);
                 for(int i = 0; i <= r_level; i++){
                     new_node->forward_[i] = to_update[i]->forward_[i];
                     to_update[i]->forward_[i] = new_node;
@@ -88,27 +103,28 @@ namespace factdb{
             //start at highest level of skiplist, move current pointer forward 
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
                 while(current->forward_[i] != NULL && 
-                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                        current->forward_[i]->entry_->key_ < key){ // move as far right as possible
                             current = current->forward_[i];
                 }
             }
             if(current == NULL || current->forward_[0] == NULL){
                 return false;
             }
-            return current->forward_[0]->entry_.key_ == key; 
+            return current->forward_[0]->entry_->key_ == key; 
         }
         std::optional<ValueType> find_value(KeyType key) {
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
             
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
                 while(current->forward_[i] != NULL && 
-                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                        current->forward_[i]->entry_->key_ < key){ // move as far right as possible
                             current = current->forward_[i];
                 }
             }
             current = current->forward_[0];
-            if(current != NULL && current->entry_.key_ == key){
-                return current->entry_.value_;
+            std::cout << "P1: KEY" << current->entry_->key_ << std::endl;
+            if(current != NULL && current->entry_->key_ == key){
+                return current->entry_->values_.back()->value_;
             }
             return std::nullopt;
         }
@@ -118,16 +134,17 @@ namespace factdb{
             //start at highest level of skiplist, move current pointer forward 
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
                 while(current->forward_[i] != NULL && 
-                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                        current->forward_[i]->entry_->key_ < key){ // move as far right as possible
                             current = current->forward_[i];
                 }
             } 
             current = current->forward_[0];
-            if(current == NULL || current->entry_.key_ != key){
+            if(current == NULL || current->entry_->key_ != key){
                 return false;
             }
-            if(current && current->entry_.key_ == key){
-                current->entry_.value_ = value;
+            if(current && current->entry_->key_ == key){
+                auto new_entry = std::make_shared<MemTableValue<ValueType>>(value, 1633036800, false);
+                current->entry_->values_.push_back(new_entry);
                 return true;
             }
             return false;
@@ -169,8 +186,8 @@ namespace factdb{
                 std::cout << "Level " << i <<": ";
                 while(current != NULL)
                 {
-                    int value = current->entry_.value_.value_or(0);
-                    std::cout << current->entry_.key_ << "(" <<  value << ") ";
+                    auto entry = current->entry_->values_.back();
+                    std::cout << current->entry_->key_ << "(" <<  entry->value_ << ") ";
                     current = current->forward_[i];
                 }
                 std::cout << "\n";
