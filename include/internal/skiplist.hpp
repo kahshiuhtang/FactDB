@@ -28,7 +28,7 @@ namespace factdb{
         std::vector<std::shared_ptr<SkipListNode<KeyType, ValueType>>> forward_; // next node at each level
 
         SkipListNode(int level, const MemTableEntry<KeyType, ValueType>& entry)
-            : entry_(entry), forward_(level, nullptr) {}
+            : entry_(entry), forward_(level + 1, nullptr) {}
     };
     // two directions: forward and down
     template <typename KeyType, typename ValueType>
@@ -51,7 +51,7 @@ namespace factdb{
         void insert(KeyType key, ValueType value) {
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
             std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_ + 1];
-            memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
+            memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1, 0));
             
             //start at highest level of skiplist, move current pointer forward 
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
