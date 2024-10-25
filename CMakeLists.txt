@@ -44,7 +44,8 @@ target_link_libraries(factdb PRIVATE factdb_lib)
 
 # Test executable for the tests folder, linked with GTest and the shared library
 add_executable(factdb_tests
-    tests/test_main.cpp  # Add your test files here
+    tests/test_main.cpp 
+    tests/test_skiplist.cpp
 )
 
 # Link the test executable with GTest and the shared library
