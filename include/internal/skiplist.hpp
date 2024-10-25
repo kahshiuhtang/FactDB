@@ -118,8 +118,33 @@ namespace factdb{
             current->forward_[0]->entry_.value_ = value;
             return true;
         }
-        bool remove(KeyType value){
+        bool remove(KeyType key){
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_];
+            memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
+            
+            for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
+                while(current->forward_[i] != NULL && 
+                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                            current = current->forward_[i];
+                }
+                to_update[i] = current;
+            }
+            current = current->forward_[0]; // could be our desired node
+            
+            if(current != NULL && current->entry_.key_ == key){
+                // start from bottom, rearrange pointers
+                for(int i = 0; i < highest_lvl_; i++){
+                    // if next node is not target, not more rearranging needed
+                    if(to_update[i]->forward_[i] != current){
+                        break;
+                    }
+                    to_update[i]->forward_[i] = current->forward_[i];
+                }
 
+                while(highest_lvl_ > 0 and head_->forward_[highest_lvl_] == 0)
+                    highest_lvl_--;
+            }
             return false;
         }
         void display() {
