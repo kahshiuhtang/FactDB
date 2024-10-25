@@ -7,12 +7,18 @@ int main(){
     // Insert some values into the skip list
     std::cout << "Inserting values into SkipList...\n";
     skipList.insert(3, 3);
-    skipList.insert(3, 3);
+    skipList.insert(4, 3);
 
     // Display the current state of the skip list
     std::cout << "Current state of the SkipList:\n";
     skipList.display();
-
+    if(skipList.search(4)){
+        std::cout <<  "Found 4"  << std::endl;
+    }
+    if(skipList.search(5)){
+        std::cout <<  "FOUND 5" << std::endl;
+    }
+    skipList.update(4, 7);
     // Test insertion of duplicate value
     std::cout << "Inserting duplicate value (9)...\n";
     skipList.insert(9, 3);
