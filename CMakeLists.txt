@@ -20,7 +20,6 @@ FetchContent_Declare(
 )
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
-
 # Library for compiler flags
 add_library(compiler_flags INTERFACE)
 target_compile_features(compiler_flags INTERFACE cxx_std_17)
@@ -39,15 +38,24 @@ add_executable(factdb
     src/internal/sstable.cpp
 )
 
+find_package(Boost 1.74 REQUIRED COMPONENTS system filesystem thread)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+else()
+    message(FATAL_ERROR "Boost not found")
+endif()
 # Link the main executable with the shared library
-target_link_libraries(factdb PRIVATE factdb_lib)
+target_link_libraries(factdb PRIVATE factdb_lib ${Boost_LIBRARIES})
 
 # Test executable for the tests folder, linked with GTest and the shared library
 add_executable(factdb_tests
     tests/test_main.cpp 
     tests/test_skiplist.cpp
+    tests/test_bloomfilter.cpp
 )
+find_package(Boost 1.74 REQUIRED COMPONENTS system filesystem thread)
 
 # Link the test executable with GTest and the shared library
 target_link_libraries(factdb_tests PRIVATE gtest gtest_main factdb_lib)
 target_include_directories(factdb_tests PRIVATE include)
+
