@@ -24,6 +24,7 @@ namespace factdb{
     template <typename KeyType, typename ValueType>
     struct MemTableEntry {
         KeyType key_;
+        bool is_deleted_ = false;
         std::vector<std::shared_ptr<MemTableValue<ValueType>>> values_;
 
         MemTableEntry(const KeyType& k)
@@ -97,6 +98,7 @@ namespace factdb{
                 }
             }else if(current == NULL || current->entry_->key_ == key){
                 auto new_entry = std::make_shared<MemTableValue<ValueType>>(value, 1633036800, false);
+                current->entry_->is_deleted_ = false;
                 current->entry_->values_.push_back(new_entry);
             }
         }
@@ -113,7 +115,7 @@ namespace factdb{
             if(current == NULL || current->forward_[0] == NULL){
                 return false;
             }
-            return current->forward_[0]->entry_->key_ == key; 
+            return current->forward_[0]->entry_->key_ == key && current->entry_->is_deleted_ == false; 
         }
         std::optional<ValueType> find_value(KeyType key) {
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
@@ -126,7 +128,7 @@ namespace factdb{
             }
             current = current->forward_[0];
             std::cout << "P1: KEY" << current->entry_->key_ << std::endl;
-            if(current != NULL && current->entry_->key_ == key){
+            if(current != NULL && current->entry_->key_ == key && current->entry_->is_deleted_ == false){
                 return current->entry_->values_.back()->value_;
             }
             return std::nullopt;
@@ -145,7 +147,7 @@ namespace factdb{
             if(current == NULL || current->entry_->key_ != key){
                 return false;
             }
-            if(current && current->entry_->key_ == key){
+            if(current && current->entry_->key_ == key && current->entry_->is_deleted_ == false){
                 auto new_entry = std::make_shared<MemTableValue<ValueType>>(value, 1633036800, false);
                 current->entry_->values_.push_back(new_entry);
                 return true;
@@ -167,17 +169,8 @@ namespace factdb{
             current = current->forward_[0]; // could be our desired node
             
             if(current != NULL && current->entry_.key_ == key){
-                // start from bottom, rearrange pointers
-                for(int i = 0; i < highest_lvl_; i++){
-                    // if next node is not target, not more rearranging needed
-                    if(to_update[i]->forward_[i] != current){
-                        break;
-                    }
-                    to_update[i]->forward_[i] = current->forward_[i];
-                }
-
-                while(highest_lvl_ > 0 and head_->forward_[highest_lvl_] == 0)
-                    highest_lvl_--;
+                current->entry_->is_deleted_ = true;
+                return true;
             }
             return false;
         }
@@ -208,6 +201,35 @@ namespace factdb{
                 level++;
             }
             return level;
+        }
+        bool remove_(KeyType key){
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
+            std::shared_ptr<SkipListNode<KeyType, ValueType>> to_update[max_level_ + 1];
+            memset(to_update, 0, sizeof(std::shared_ptr<SkipListNode<KeyType, ValueType>>) * (max_level_ + 1));
+            
+            for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
+                while(current->forward_[i] != NULL && 
+                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                            current = current->forward_[i];
+                }
+                to_update[i] = current;
+            }
+            current = current->forward_[0]; // could be our desired node
+            
+            if(current != NULL && current->entry_.key_ == key){
+                // start from bottom, rearrange pointers
+                for(int i = 0; i < highest_lvl_; i++){
+                    // if next node is not target, not more rearranging needed
+                    if(to_update[i]->forward_[i] != current){
+                        break;
+                    }
+                    to_update[i]->forward_[i] = current->forward_[i];
+                }
+
+                while(highest_lvl_ > 0 and head_->forward_[highest_lvl_] == 0)
+                    highest_lvl_--;
+            }
+            return false;
         }
     };
 }
