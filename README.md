@@ -6,8 +6,8 @@ Personal Project
 
 Requirements:
 
-C++17
-Boost 1.74
+C++20
+Boost 1.86
 Google Test
 
 To build and run:

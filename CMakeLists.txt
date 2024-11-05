@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 project(factdb VERSION 0.1.0)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-lstdc++fs -std=c++17")
 cmake_policy(SET CMP0072 NEW)
 
@@ -17,6 +17,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
@@ -38,7 +39,7 @@ add_executable(factdb
     src/internal/sstable.cpp
 )
 
-find_package(Boost 1.74 REQUIRED COMPONENTS system filesystem thread)
+find_package(Boost 1.86 REQUIRED COMPONENTS system filesystem thread)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 else()
