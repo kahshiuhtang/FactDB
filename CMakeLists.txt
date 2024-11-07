@@ -53,6 +53,7 @@ add_executable(factdb_tests
     tests/test_main.cpp 
     tests/test_skiplist.cpp
     tests/test_bloomfilter.cpp
+    tests/test_logger.cpp
 )
 find_package(Boost 1.74 REQUIRED COMPONENTS system filesystem thread)
 
