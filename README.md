@@ -6,9 +6,9 @@ Personal Project
 
 Requirements:
 
-C++20
-Boost 1.86
-Google Test
+* C++20
+* Boost 1.86
+* Google Test
 
 To build and run:
 
