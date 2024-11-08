@@ -31,6 +31,10 @@ std::shared_ptr<factdb::SSTable> factdb::Memtable::flush_to_sstable(std::string 
     for (const auto& partition_entry : skiplist_map_) {
         const std::string& partition_key = partition_entry.first;
         auto partition_skiplist = partition_entry.second;
+        std::shared_ptr<factdb::Partition> partition = std::make_shared<factdb::Partition>();
+        for (auto it = partition_skiplist->begin(); it != partition_skiplist->end(); ++it) {
+            std::cout << "Key: " << it->key_ << ", Value: " << it->values_.back()->value_ << "\n";
+        }
     }
     skiplist_map_.clear();
     return sstable;
