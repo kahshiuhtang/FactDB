@@ -39,7 +39,7 @@ add_executable(factdb
     src/internal/sstable.cpp
 )
 
-find_package(Boost 1.86 REQUIRED COMPONENTS system filesystem thread)
+find_package(Boost 1.86 REQUIRED COMPONENTS system filesystem thread serialization)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 else()
@@ -54,6 +54,7 @@ add_executable(factdb_tests
     tests/test_skiplist.cpp
     tests/test_bloomfilter.cpp
     tests/test_logger.cpp
+    tests/test_memtable.cpp
 )
 find_package(Boost 1.74 REQUIRED COMPONENTS system filesystem thread)
 
