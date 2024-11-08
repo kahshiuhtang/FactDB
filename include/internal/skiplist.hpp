@@ -8,6 +8,7 @@
 #include <random>
 #include <string>
 #include <cstring>
+#include <iterator>
 
 namespace factdb{
 
@@ -45,6 +46,53 @@ namespace factdb{
 
         SkipListNode(int level, std::shared_ptr<MemTableEntry<KeyType, ValueType>> entry)
             : entry_(entry), forward_(level + 1, nullptr) {}
+    };
+
+
+    template <typename KeyType, typename ValueType>
+    class SkipListIterator : public std::iterator<std::forward_iterator_tag, MemTableEntry<KeyType, ValueType>> {
+    public:
+        SkipListIterator(std::shared_ptr<SkipListNode<KeyType, ValueType>> node)
+            : current_node_(node) {}
+
+        MemTableEntry<KeyType, ValueType>& operator*() const {
+            return *current_node_->entry_;
+        }
+
+        MemTableEntry<KeyType, ValueType>* operator->() const {
+            return current_node_->entry_.get();
+        }
+
+        SkipListIterator& operator++() {
+            if (current_node_) {
+                current_node_ = current_node_->forward_[0]; // Move to the next node at level 0
+            }
+            return *this;
+        }
+
+        SkipListIterator operator++(int) {
+            SkipListIterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+        bool operator==(std::nullptr_t) const {
+            return current_node_ == nullptr;
+        }
+
+        bool operator!=(std::nullptr_t) const {
+            return current_node_ != nullptr;
+        }
+
+        bool operator==(const SkipListIterator& other) const {
+            return current_node_ == other.current_node_;
+        }
+
+        bool operator!=(const SkipListIterator& other) const {
+            return current_node_ != other.current_node_;
+        }
+
+    private:
+        std::shared_ptr<SkipListNode<KeyType, ValueType>> current_node_;
     };
 
     // two directions: forward and down
@@ -133,6 +181,9 @@ namespace factdb{
             }
             return std::nullopt;
         }
+        std::shared_ptr<SkipListNode<KeyType, ValueType>> get_head(){
+            return head_;
+        }
         bool update(KeyType key, ValueType value){
             std::shared_ptr<SkipListNode<KeyType, ValueType>> current = head_;
             
@@ -188,6 +239,12 @@ namespace factdb{
                 }
                 std::cout << "\n";
             }
+        }
+        factdb::SkipListIterator<KeyType, ValueType> begin() {
+            return factdb::SkipListIterator<KeyType, ValueType>(head_->forward_[0]); 
+        }
+        factdb::SkipListIterator<KeyType, ValueType> end() {
+            return factdb::SkipListIterator<KeyType, ValueType>(nullptr);
         }
     private:
         std::shared_ptr<SkipListNode<KeyType, ValueType>> head_;     // head node of the skiplist
