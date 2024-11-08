@@ -1,4 +1,0 @@
-#ifndef SUMMARYFILE_FACTDB_HPP
-#define SUMMARYFILE_FACTDB_HPP
-
-#endif
