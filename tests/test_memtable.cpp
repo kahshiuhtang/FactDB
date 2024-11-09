@@ -7,14 +7,14 @@ TEST(MemtableColumnTest, DefaultConstructor) {
     MemtableColumn column;
     EXPECT_EQ(column.getcolname_(), "");
     EXPECT_EQ(column.getcoltype_(), ColumnType::UNKNOWN);
-    EXPECT_EQ(column.get_serialize(), "");
+    EXPECT_EQ(column.get_serialized_val_(), "");
 }
 
 TEST(MemtableColumnTest, ParameterizedConstructor) {
     MemtableColumn column("user_id", ColumnType::STRING, "user123");
     EXPECT_EQ(column.getcolname_(), "user_id");
     EXPECT_EQ(column.getcoltype_(), ColumnType::STRING);
-    EXPECT_EQ(column.get_serialize(), "user123");
+    EXPECT_EQ(column.get_serialized_val_(), "user123");
 }
 
 TEST(MemtableColumnTest, SetAndGetColumnName) {
@@ -31,56 +31,56 @@ TEST(MemtableColumnTest, SetAndGetColumnType) {
 
 TEST(MemtableColumnTest, SetAndGetSerializedValue) {
     MemtableColumn column;
-    column.set_serialize_("true");
-    EXPECT_EQ(column.get_serialize(), "true");
+    column.set_serialized_val_("true");
+    EXPECT_EQ(column.get_serialized_val_(), "true");
 }
 
 TEST(MemtableColumnTest, SerializeInteger) {
     MemtableColumn column;
-    column.serialize_(42);
-    EXPECT_EQ(column.get_serialize(), "42");
+    column.serialize_col_(42);
+    EXPECT_EQ(column.get_serialized_val_(), "42");
 }
 
 TEST(MemtableColumnTest, DeserializeInteger) {
     MemtableColumn column;
-    column.set_serialize_("42");
-    EXPECT_EQ(column.deserialize_<int>(), 42);
+    column.set_serialized_val_("42");
+    EXPECT_EQ(column.deserialize_col_<int>(), 42);
 }
 
 TEST(MemtableColumnTest, SerializeFloat) {
     MemtableColumn column;
-    column.serialize_(3.14f);
-    EXPECT_EQ(column.get_serialize(), "3.14");
+    column.serialize_col_(3.14f);
+    EXPECT_EQ(column.get_serialized_val_(), "3.14");
 }
 
 TEST(MemtableColumnTest, DeserializeFloat) {
     MemtableColumn column;
-    column.set_serialize_("3.14");
-    EXPECT_NEAR(column.deserialize_<float>(), 3.14f, 0.001);
+    column.set_serialized_val_("3.14");
+    EXPECT_NEAR(column.deserialize_col_<float>(), 3.14f, 0.001);
 }
 
 TEST(MemtableColumnTest, SerializeBoolean) {
     MemtableColumn column;
-    column.serialize_(true);
-    EXPECT_EQ(column.get_serialize(), "1");
+    column.serialize_col_(true);
+    EXPECT_EQ(column.get_serialized_val_(), "1");
 }
 
 TEST(MemtableColumnTest, DeserializeBoolean) {
     MemtableColumn column;
-    column.set_serialize_("0");
-    EXPECT_EQ(column.deserialize_<bool>(), false);
+    column.set_serialized_val_("0");
+    EXPECT_EQ(column.deserialize_col_<bool>(), false);
 }
 
 TEST(MemtableColumnTest, SerializeString) {
     MemtableColumn column;
-    column.serialize_(std::string("test"));
-    EXPECT_EQ(column.get_serialize(), "test");
+    column.serialize_col_(std::string("test"));
+    EXPECT_EQ(column.get_serialized_val_(), "test");
 }
 
 TEST(MemtableColumnTest, DeserializeString) {
     MemtableColumn column;
-    column.set_serialize_("hello");
-    EXPECT_EQ(column.deserialize_<std::string>(), "hello");
+    column.set_serialized_val_("hello");
+    EXPECT_EQ(column.deserialize_col_<std::string>(), "hello");
 }
 
 TEST(MemtableColumnTest, Print) {
@@ -95,7 +95,7 @@ TEST(MemtableColumnTest, Print) {
 
 TEST(MemtableColumnTest, EmptySerializedValue) {
     MemtableColumn column;
-    column.set_serialize_("");
-    EXPECT_EQ(column.get_serialize(), "");
-    EXPECT_EQ(column.deserialize_<std::string>(), "");
+    column.set_serialized_val_("");
+    EXPECT_EQ(column.get_serialized_val_(), "");
+    EXPECT_EQ(column.deserialize_col_<std::string>(), "");
 }
