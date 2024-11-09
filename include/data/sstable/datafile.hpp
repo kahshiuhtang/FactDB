@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <optional>
 #include <vector>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/optional.hpp>
 
 namespace factdb {
 const int DEFAULT_ARRAY_SIZE = 32;
@@ -14,6 +17,13 @@ public:
     uint64_t marked_for_delete_at;
 
     DeletionTime() : local_deletion_time(0), marked_for_delete_at(0) {}
+private:
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & local_deletion_time;
+        ar & marked_for_delete_at;
+    }
 };
 
 class PartitionHeader {
@@ -72,10 +82,13 @@ public:
 };
 class CellValue {
 public:
-    uint32_t length_;
+    uint32_t val_length_;
+    uint32_t key_length_;
+    std::vector<char> key_;
     std::vector<char> value_;
 
-    CellValue(uint32_t length) : length_(length), value_(length) {}
+    CellValue() {}
+    CellValue(uint32_t val_length, uint32_t key_length) : val_length_(val_length), value_(key_length) {}
 };
 class SimpleCell : public Cell {
 public:
@@ -87,10 +100,12 @@ public:
     std::optional<CellValue> value_;
 
     SimpleCell() : flags(0) {}
+    SimpleCell(const CellValue& cell_value) : flags(0), value_(cell_value) {}
 };
 class ClusteringBlock {
-    uint64_t clustering_block_header;
-    SimpleCell* clustering_cells;
+public:
+    uint64_t clustering_block_header_;
+    std::vector<SimpleCell> clustering_cells_;
 };
 
 enum class CellFlags {
@@ -110,7 +125,7 @@ public:
     ComplexCell() : items_count(0) {}
 };
 
-class RangeTombstoneMarker {
+class RangeTombstoneMarker : public Unfiltered {
 public:
     RowFlags flags_ = RowFlags::IS_MARKER;
     char kind_ordinal_;
@@ -145,7 +160,7 @@ class Row : public Unfiltered {
 public:
     char flags_;
     std::optional<char> extended_flags_;
-    std::vector<std::optional<ClusteringBlock>> clustering_blocks_;
+    std::vector<std::shared_ptr<factdb::ClusteringBlock>>  clustering_blocks_;
     uint64_t row_body_size_;
     uint64_t prev_unfiltered_size_; // for backward traversing
     std::optional<LivenessInfo> liveness_info_;
@@ -160,7 +175,7 @@ class Partition {
 public:
     PartitionHeader header_;
     std::optional<Row> static_row_;
-    std::vector<Unfiltered> unfiltereds_;
+    std::vector<std::shared_ptr<Unfiltered>> unfiltereds_;
 
     Partition() : header_(), static_row_(std::nullopt) {}
 };

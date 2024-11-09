@@ -212,14 +212,14 @@ namespace factdb{
             
             for(int i = highest_lvl_; i >= 0; i--){ // top level dowm
                 while(current->forward_[i] != NULL && 
-                        current->forward_[i]->entry_.key_ < key){ // move as far right as possible
+                        current->forward_[i]->entry_->key_ < key){ // move as far right as possible
                             current = current->forward_[i];
                 }
                 to_update[i] = current;
             }
             current = current->forward_[0]; // could be our desired node
             
-            if(current != NULL && current->entry_.key_ == key){
+            if(current != NULL && current->entry_->key_ == key){
                 current->entry_->is_deleted_ = true;
                 return true;
             }

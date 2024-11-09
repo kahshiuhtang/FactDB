@@ -40,18 +40,18 @@ public:
     ColumnType getcoltype_() const { return column_type_; }
     void setcoltype_(ColumnType type) { column_type_ = type; }
 
-    const std::string& get_serialize() const { return serialized_value_; }
-    void set_serialize_(const std::string& value) { serialized_value_ = value; }
+    const std::string& get_serialized_val_() const { return serialized_value_; }
+    void set_serialized_val_(const std::string& value) { serialized_value_ = value; }
 
     template <typename T>
-    void serialize_(const T& value) {
+    void serialize_col_(const T& value) {
         std::ostringstream oss;
         oss << value;
         serialized_value_ = oss.str();
     }
 
     template <typename T>
-    T deserialize_() const {
+    T deserialize_col_() const {
         std::istringstream iss(serialized_value_);
         T value;
         iss >> value;
@@ -75,18 +75,40 @@ private:
             case ColumnType::INT: return "INT";
             case ColumnType::BOOL: return "BOOL";
             case ColumnType::FLOAT: return "FLOAT";
+            case ColumnType::ARRAY: return "ARRAY";
             default: return "UNKNOWN";
         }
     }
 };
+class MemtableRow {
+public:
+    void addcol_(const std::shared_ptr<MemtableColumn> column) {
+        columns_[column->getcolname_()] = column;
+    }
+
+    const std::shared_ptr<MemtableColumn> getcol_(const std::string& col_name) const {
+        auto it = columns_.find(col_name);
+        if (it != columns_.end()) {
+            return it->second;
+        }
+        return nullptr;
+    }
+    std::unordered_map<std::string, std::shared_ptr<MemtableColumn>> getallcols_(){
+        return columns_;
+    }
+
+private:
+    std::unordered_map<std::string, std::shared_ptr<MemtableColumn>> columns_;
+};
 class Memtable {
 public:
-    void insert(std::string partition_key, std::string cluster_key, std::string value);
-    bool update(std::string partition_key, std::string cluster_key, std::string value);
-    void remove();
+    void insert(std::string partition_key, std::string cluster_key, std::shared_ptr<std::vector<std::shared_ptr<factdb::MemtableRow>>> value);
+    bool update(std::string partition_key, std::string cluster_key, std::shared_ptr<std::vector<std::shared_ptr<factdb::MemtableRow>>> value);
+    bool remove(std::string partition_key, std::string cluster_key);
     std::shared_ptr<factdb::SSTable> flush_to_sstable(std::string &table_id);
 private:
-    std::unordered_map<std::string, std::shared_ptr<factdb::SkipList<std::string, std::string>>> skiplist_map_; //map<parititon_key, skiplist<cluster_key, value>>
+    std::shared_ptr<factdb::Row> convert_obj_to_row_(const std::unordered_map<std::string, std::shared_ptr<factdb::MemtableColumn>> *obj, std::string* cluster_key);
+    std::unordered_map<std::string, std::shared_ptr<factdb::SkipList<std::string, std::shared_ptr<std::vector<std::shared_ptr<factdb::MemtableRow>>>>>> skiplist_map_; //map<parititon_key, skiplist<cluster_key, value>>
 };
 }
 #endif
