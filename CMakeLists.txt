@@ -3,7 +3,7 @@ project(factdb VERSION 0.1.0)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "-lstdc++fs -std=c++17")
+set(CMAKE_CXX_FLAGS "-lstdc++fs -std=c++20")
 cmake_policy(SET CMP0072 NEW)
 
 # Export compile commands
@@ -27,16 +27,16 @@ target_compile_features(compiler_flags INTERFACE cxx_std_17)
 
 # Create a shared library from the source files in src/
 add_library(factdb_lib 
-    src/main.cpp  # List the source files you want to share between the executables
+    src/internal/memtable.cpp 
+    src/internal/sstable.cpp
 )
+
 
 target_include_directories(factdb_lib PRIVATE include)
 
 # Main executable for the src folder
 add_executable(factdb 
     src/main.cpp
-    src/internal/memtable.cpp 
-    src/internal/sstable.cpp
 )
 
 find_package(Boost 1.86 REQUIRED COMPONENTS system filesystem thread serialization)
@@ -55,6 +55,7 @@ add_executable(factdb_tests
     tests/test_bloomfilter.cpp
     tests/test_logger.cpp
     tests/test_memtable.cpp
+    tests/test_sstable.cpp
 )
 find_package(Boost 1.74 REQUIRED COMPONENTS system filesystem thread)
 
