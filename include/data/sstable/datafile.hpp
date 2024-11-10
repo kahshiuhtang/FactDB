@@ -37,9 +37,6 @@ public:
 
 class Unfiltered {};
 
-class Cell {};
-
-
 class DeltaDeletionTime {
 public:
     uint64_t delta_marked_for_delete_at;
@@ -90,23 +87,6 @@ public:
     CellValue() {}
     CellValue(uint32_t val_length, uint32_t key_length) : val_length_(val_length), value_(key_length) {}
 };
-class SimpleCell : public Cell {
-public:
-    char flags;
-    std::optional<uint64_t> delta_timestamp_;
-    std::optional<uint64_t> delta_local_deletion_time_;
-    std::optional<uint64_t> delta_ttl_;
-    std::optional<CellPath> path_; // only in cells nested into complex_cells
-    std::optional<CellValue> value_;
-
-    SimpleCell() : flags(0) {}
-    SimpleCell(const CellValue& cell_value) : flags(0), value_(cell_value) {}
-};
-class ClusteringBlock {
-public:
-    uint64_t clustering_block_header_;
-    std::vector<SimpleCell> clustering_cells_;
-};
 
 enum class CellFlags {
     IS_DELETED_MASK = 0x01,
@@ -115,16 +95,47 @@ enum class CellFlags {
     USE_ROW_TIMESTAMP_MASK = 0x08,
     USE_ROW_TTL_MASK = 0x10,
 };
-
+class Cell {
+public:
+    virtual CellValue get_cell_(int index){
+        throw std::logic_error("Not implemented in base class");
+    }
+    virtual ~Cell() = default;
+};
+class SimpleCell : public Cell {
+public:
+    char flags;
+    std::optional<uint64_t> delta_timestamp_;
+    std::optional<uint64_t> delta_local_deletion_time_;
+    std::optional<uint64_t> delta_ttl_;
+    std::optional<CellPath> path_; // only in cells nested into complex_cells
+    CellValue value_;
+    SimpleCell() : flags(0), value_() {}
+    SimpleCell(const CellValue& cell_value) : flags(0), value_(cell_value) {}
+    CellValue get_cell_(int index){
+        return value_;
+    }
+};
 class ComplexCell : public Cell {
 public:
     std::optional<DeltaDeletionTime> complex_deletion_time;
     uint32_t items_count;
     std::vector<SimpleCell> value_;
 
-    ComplexCell() : items_count(0) {}
+    ComplexCell() : items_count(0), value_() {}
+    CellValue get_cell_(int index){
+        if (index >= 0 && index < value_.size()) {
+            return value_[index].value_;
+        }
+        CellValue emptycell;
+        return emptycell;
+    }
 };
-
+class ClusteringBlock {
+public:
+    uint64_t clustering_block_header_;
+    std::vector<SimpleCell> clustering_cells_;
+};
 class RangeTombstoneMarker : public Unfiltered {
 public:
     RowFlags flags_ = RowFlags::IS_MARKER;

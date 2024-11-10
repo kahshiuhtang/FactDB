@@ -16,6 +16,7 @@
 
 #include "internal/skiplist.hpp"
 #include "data/sstable.hpp"
+#include "data/sstable/datafile.hpp"
 
 namespace factdb{
 enum class ColumnType {
@@ -106,8 +107,8 @@ public:
     bool update(std::string partition_key, std::string cluster_key, std::shared_ptr<std::vector<std::shared_ptr<factdb::MemtableRow>>> value);
     bool remove(std::string partition_key, std::string cluster_key);
     std::shared_ptr<factdb::SSTable> flush_to_sstable(std::string &table_id);
+    std::shared_ptr<factdb::Row> convert_obj_to_row_(std::unordered_map<std::string, std::shared_ptr<factdb::MemtableColumn>> *obj, std::string* cluster_key);
 private:
-    std::shared_ptr<factdb::Row> convert_obj_to_row_(const std::unordered_map<std::string, std::shared_ptr<factdb::MemtableColumn>> *obj, std::string* cluster_key);
     std::unordered_map<std::string, std::shared_ptr<factdb::SkipList<std::string, std::shared_ptr<std::vector<std::shared_ptr<factdb::MemtableRow>>>>>> skiplist_map_; //map<parititon_key, skiplist<cluster_key, value>>
 };
 }

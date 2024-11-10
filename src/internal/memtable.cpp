@@ -27,7 +27,7 @@ bool factdb::Memtable::remove(std::string partition_key, std::string cluster_key
     }
     return false;
 }
-std::shared_ptr<factdb::Row> factdb::Memtable::convert_obj_to_row_(const std::unordered_map<std::string, std::shared_ptr<factdb::MemtableColumn>> *obj, std::string* cluster_key){
+std::shared_ptr<factdb::Row> factdb::Memtable::convert_obj_to_row_(std::unordered_map<std::string, std::shared_ptr<factdb::MemtableColumn>> *obj, std::string* cluster_key){
     if(obj == nullptr){
         return nullptr;
     }
